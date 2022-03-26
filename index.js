@@ -28,11 +28,12 @@ app.get('/auth', function (req, res) {
         }
       )
       .then((response) => {
-        res.send(JSON.stringify(response.data))
+        console.log(response)
+        res.send(JSON.stringify(response))
       })
       .catch((err) => {
         res.send('Fuck you 希拉蕊不歡迎你')
-        console.log(JSON.stringify(err))
+        console.log(err)
       })
   }
 })
