@@ -13,6 +13,9 @@
   },
   "author": "Log",
   "license": "MIT",
+  "engines": {
+    "node": "16.5.0"
+  },
   "dependencies": {
     "express": "^4.17.3"
   }
