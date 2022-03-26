@@ -14,13 +14,13 @@ app.get('/auth', function (req, res) {
     axios
       .post(
         'https://api.line.me/oauth2/v2.1/token',
-        {
+        new URLSearchParams({
           grant_type: 'authorization_code',
           code,
           redirect_uri: 'https://oh-my-hillary.herokuapp.com/auth',
           client_id: '1657006910',
           client_secret: 'fa79619c9372bb5d03c10de98cec99dd'
-        },
+        }),
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
