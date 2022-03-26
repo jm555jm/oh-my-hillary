@@ -28,8 +28,7 @@ app.get('/auth', function (req, res) {
         }
       )
       .then((response) => {
-        console.log(response)
-        res.send(JSON.stringify(response))
+        res.send(JSON.stringify(response.data))
       })
       .catch((err) => {
         res.send('Fuck you 希拉蕊不歡迎你')
