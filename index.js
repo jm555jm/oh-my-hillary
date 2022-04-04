@@ -185,7 +185,7 @@ app.post('/admin', async function (req, res) {
     console.log(err)
   }
 })
-const subscriptions = []
+let subscriptions = []
 const states = {}
 const genState = () => {
   const s = new Date().getTime()
