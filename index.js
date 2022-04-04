@@ -74,6 +74,7 @@ app.get('/auth', async function (req, res) {
   }
 })
 app.post('/submission', async function (req, res) {
+  console.log(JSON.stringify(req.body))
   res.send(JSON.stringify(req.body))
 })
 const states = {}
