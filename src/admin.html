@@ -3,17 +3,19 @@
 
 <body>
   <div class="container">
-    <h1>Hi, _{name}_! _{welcome}_</h1>
-    <a href="https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=a4qQdoKW9Rnbj5P3WfqsXP&redirect_uri=https%3A%2F%2Foh-my-hillary.herokuapp.com%2Fsubmission&state=_{state}_&scope=notify&response_mode=form_post
-    ">訂閱希拉蕊晚安
-    </a>
+    <h1>Hi, 希拉蕊! 跟大家說晚安吧！</h1>
+    <form action="/admin" method="post">
+      <input type="text" name="message" />
+      <input hidden value="_{state}_" name="state" />
+      <button type="submit">大家晚安！</button>
+    </form>
   </div>
 </body>
 <style>
   body {
     height: 98vh;
     padding: 0;
-    background-image: url('_{picture}_');
+    background-image: url('https://m.media-amazon.com/images/M/MV5BNmQ1OTJhMzItNWIzOC00ZjdlLWEwNDgtODRiYjczNTkyZjc5XkEyXkFqcGdeQXVyMTExNDQ2MTI@._V1_.jpg');
     display: flex;
     align-items: center;
     justify-content: center;

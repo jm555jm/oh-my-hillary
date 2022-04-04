@@ -44,6 +44,7 @@ app.get('/home', async function (req, res) {
       .replace('_{name}_', name)
       .replace('_{picture}_', picture)
       .replace('_{state}_', genState())
+      .replace('_{welcome}_', req.session.welcome)
   )
 })
 app.get('/auth', async function (req, res) {
@@ -69,6 +70,7 @@ app.get('/auth', async function (req, res) {
       )
 
       req.session.id_token = tokenResponse.data.id_token
+      req.session.welcome = '希拉蕊後援會歡迎你'
       res.redirect('/home')
     } catch (err) {
       res.send('Fuck you 希拉蕊不歡迎你')
@@ -77,9 +79,44 @@ app.get('/auth', async function (req, res) {
   }
 })
 app.post('/submission', async function (req, res) {
-  console.log(JSON.stringify(req.body))
+  const { code, state, error } = req.body
+  if (error || !consumeState(state)) {
+    res.send('Fuck you 希拉蕊不歡迎你')
+  } else {
+    try {
+      const tokenResponse = await axios.post(
+        'https://notify-bot.line.me/oauth/token',
+        new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: 'https://oh-my-hillary.herokuapp.com/submission',
+          client_id: 'a4qQdoKW9Rnbj5P3WfqsXP',
+          client_secret: 'Co9hTRzbARlC0KPtm767HUYPjA0xB6oeT8D52v13XlY'
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      )
+
+      submissions.push(tokenResponse.data.access_token)
+      req.session.welcome = '今晚希拉蕊會跟你說晚安^^'
+      res.redirect('/home')
+    } catch (err) {
+      res.send('Fuck you 希拉蕊不歡迎你')
+      console.log(err)
+    }
+  }
+})
+app.get('/admin', function (req, res) {
+  let data = fs.readFileSync('src/admin.html', 'utf8')
+  res.send(data.replace('_{state}_', genState()))
+})
+app.post('/admin', async function (req, res) {
   res.send(JSON.stringify(req.body))
 })
+const submissions = []
 const states = {}
 const genState = () => {
   const s = new Date().getTime()
