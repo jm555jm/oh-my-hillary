@@ -109,7 +109,7 @@ app.post('/subscription', async function (req, res) {
     }
   }
 })
-app.post('/revoke', async function (req, res) {
+app.get('/revoke', async function (req, res) {
   try {
     const tokenResponse = await axios.post(
       'https://notify-api.line.me/api/revoke',
