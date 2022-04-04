@@ -1,8 +1,11 @@
 const axios = require('axios').default
 const fs = require('fs')
 const express = require('express')
-const app = express()
 var session = require('express-session')
+
+const app = express()
+
+app.use(express.urlencoded({ extended: true }))
 app.use(
   session({
     secret: 'HillaryILoveYou!',
