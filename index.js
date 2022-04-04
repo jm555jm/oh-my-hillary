@@ -114,7 +114,7 @@ app.get('/revoke', async function (req, res) {
     await axios.post('https://notify-api.line.me/api/revoke', null, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Bearer ${req.session.access_token}`
+        Authorization: `Bearer ${subscriptions[req.session.userId]}`
       }
     })
 
