@@ -78,7 +78,7 @@ app.get('/auth', async function (req, res) {
     }
   }
 })
-app.post('/submission', async function (req, res) {
+app.post('/subscription', async function (req, res) {
   const { code, state, error } = req.body
   if (error || !consumeState(state)) {
     res.send('Fuck you 希拉蕊不歡迎你')
@@ -89,7 +89,7 @@ app.post('/submission', async function (req, res) {
         new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: 'https://oh-my-hillary.herokuapp.com/submission',
+          redirect_uri: 'https://oh-my-hillary.herokuapp.com/subscription',
           client_id: 'a4qQdoKW9Rnbj5P3WfqsXP',
           client_secret: 'Co9hTRzbARlC0KPtm767HUYPjA0xB6oeT8D52v13XlY'
         }),
@@ -100,7 +100,7 @@ app.post('/submission', async function (req, res) {
         }
       )
 
-      submissions.push(tokenResponse.data.access_token)
+      subscriptions.push(tokenResponse.data.access_token)
       req.session.welcome = '今晚希拉蕊會跟你說晚安^^'
       res.redirect('/home')
     } catch (err) {
@@ -109,14 +109,83 @@ app.post('/submission', async function (req, res) {
     }
   }
 })
+app.post('/revoke', async function (req, res) {
+  try {
+    const tokenResponse = await axios.post(
+      'https://notify-api.line.me/api/revoke',
+      null,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Bearer ${access_token}`
+        }
+      }
+    )
+
+    subscriptions.push(tokenResponse.data.access_token)
+    req.session.welcome = '祝你今晚惡夢'
+    res.redirect('/home')
+  } catch (err) {
+    res.send('Fuck you 希拉蕊不歡迎你')
+    console.log(err)
+  }
+})
+
 app.get('/admin', function (req, res) {
   let data = fs.readFileSync('src/admin.html', 'utf8')
-  res.send(data.replace('_{state}_', genState()))
+  res.send(
+    data
+      .replace('_{state}_', genState())
+      .replace('_{welcome}_', '跟大家說晚安吧！')
+  )
 })
 app.post('/admin', async function (req, res) {
-  res.send(JSON.stringify(req.body))
+  const { message, state } = req.body
+  if (!consumeState(state)) {
+    res.send('有些地方出錯惹~')
+    return
+  }
+  try {
+    let verifiedsubscriptions = []
+    for (const access_token of subscriptions) {
+      try {
+        await axios.get('https://notify-api.line.me/api/status', {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${access_token}`
+          }
+        })
+        verifiedsubscriptions.push(access_token)
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    subscriptions = verifiedsubscriptions
+    for (const access_token of subscriptions) {
+      await axios.post(
+        'https://notify-api.line.me/api/notify',
+        new URLSearchParams({
+          message
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${access_token}`
+          }
+        }
+      )
+    }
+
+    let data = fs.readFileSync('src/admin.html', 'utf8')
+    res.send(
+      data.replace('_{state}_', genState()).replace('_{welcome}_', '大家晚安！')
+    )
+  } catch (err) {
+    res.send('有些地方出錯惹~')
+    console.log(err)
+  }
 })
-const submissions = []
+const subscriptions = []
 const states = {}
 const genState = () => {
   const s = new Date().getTime()
