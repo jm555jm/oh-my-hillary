@@ -1,14 +1,16 @@
 const axios = require('axios').default
+const fs = require('fs')
 const express = require('express')
 const app = express()
 app.use('/img', express.static(__dirname + '/img'))
 
 app.get('/', function (req, res) {
-  res.sendFile('src/login.html', { root: __dirname })
+  let data = fs.readFileSync('src/login.html', 'utf8')
+  res.send(data.replace('_{state}_', genState()))
 })
 app.get('/auth', async function (req, res) {
   const { code, state, error } = req.query
-  if (error) {
+  if (error || !consumeState(state)) {
     res.send('Fuck you 希拉蕊不歡迎你')
   } else {
     try {
@@ -39,12 +41,27 @@ app.get('/auth', async function (req, res) {
           }
         }
       )
-      res.send(JSON.stringify(profileResponse.data))
+      const { name, picture } = profileResponse.data
+      let data = fs.readFileSync('src/home.html', 'utf8')
+      res.send(data.replace('_{name}_', name).replace('_{picture}_', picture))
     } catch (err) {
       res.send('Fuck you 希拉蕊不歡迎你')
       console.log(err)
     }
   }
 })
+const states = {}
+const genState = () => {
+  const s = new Date().getTime()
+  states[s] = true
+  return s
+}
+const consumeState = (s) => {
+  if (states[s]) {
+    delete states[s]
+    return true
+  }
+  return false
+}
 
 app.listen(process.env.PORT || 3000)
