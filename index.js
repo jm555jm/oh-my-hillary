@@ -12,7 +12,7 @@ app.get('/auth', async function (req, res) {
     res.send('Fuck you 希拉蕊不歡迎你')
   } else {
     try {
-      const token = await axios.post(
+      const tokenResponse = await axios.post(
         'https://api.line.me/oauth2/v2.1/token',
         new URLSearchParams({
           grant_type: 'authorization_code',
@@ -27,7 +27,19 @@ app.get('/auth', async function (req, res) {
           }
         }
       )
-      res.send(JSON.stringify(token.data))
+      const profileResponse = await axios.post(
+        'https://api.line.me/oauth2/v2.1/verify',
+        new URLSearchParams({
+          id_token: tokenResponse.data.id_token,
+          client_id: '1657006910'
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      )
+      res.send(JSON.stringify(profileResponse.data))
     } catch (err) {
       res.send('Fuck you 希拉蕊不歡迎你')
       console.log(err)
