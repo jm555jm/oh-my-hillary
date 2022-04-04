@@ -20,29 +20,24 @@ app.get('/', function (req, res) {
   res.send(data.replace('_{state}_', genState()))
 })
 app.get('/home', async function (req, res) {
-  if (!req.session || !req.session.id_token) {
+  if (!req.session || !req.session.access_token) {
     res.send('Fuck you 希拉蕊不歡迎你')
     return
   }
 
-  const profileResponse = await axios.post(
-    'https://api.line.me/oauth2/v2.1/verify',
-    new URLSearchParams({
-      id_token: req.session.id_token,
-      client_id: '1657006910'
-    }),
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+  const profileResponse = await axios.get('https://api.line.me/v2/profile', {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${req.session.access_token}`
     }
-  )
-  const { name, picture } = profileResponse.data
+  })
+  const { userId, displayName, pictureUrl } = profileResponse.data
+  req.session.userId = userId
   let data = fs.readFileSync('src/home.html', 'utf8')
   res.send(
     data
-      .replace('_{name}_', name)
-      .replace('_{picture}_', picture)
+      .replace('_{name}_', displayName)
+      .replace('_{picture}_', pictureUrl)
       .replace('_{state}_', genState())
       .replace('_{welcome}_', req.session.welcome)
   )
@@ -69,7 +64,7 @@ app.get('/auth', async function (req, res) {
         }
       )
 
-      req.session.id_token = tokenResponse.data.id_token
+      req.session.access_token = tokenResponse.data.access_token
       req.session.welcome = '希拉蕊後援會歡迎你'
       res.redirect('/home')
     } catch (err) {
@@ -100,7 +95,7 @@ app.post('/subscription', async function (req, res) {
         }
       )
 
-      subscriptions.push(tokenResponse.data.access_token)
+      subscriptions[req.session.userId] = tokenResponse.data.access_token
       req.session.access_token = tokenResponse.data.access_token
       req.session.welcome = '今晚希拉蕊會跟你說晚安^^'
       res.redirect('/home')
@@ -111,7 +106,7 @@ app.post('/subscription', async function (req, res) {
   }
 })
 app.get('/revoke', async function (req, res) {
-  if (!req.session.access_token) {
+  if (!req.session.userId) {
     req.session.welcome = '祝你今晚惡夢'
     res.redirect('/home')
     return
@@ -128,7 +123,7 @@ app.get('/revoke', async function (req, res) {
       }
     )
 
-    subscriptions.push(tokenResponse.data.access_token)
+    delete subscriptions[req.session.userId]
     req.session.welcome = '祝你今晚惡夢'
     res.redirect('/home')
   } catch (err) {
@@ -138,7 +133,7 @@ app.get('/revoke', async function (req, res) {
 })
 
 app.get('/resetSubsciption', async function (req, res) {
-  subscriptions = []
+  subscriptions = {}
   res.redirect('/admin')
 })
 
@@ -157,22 +152,22 @@ app.post('/admin', async function (req, res) {
     return
   }
   try {
-    let verifiedsubscriptions = []
-    for (const access_token of subscriptions) {
+    let verifiedsubscriptions = {}
+    for (const user in subscriptions) {
       try {
         await axios.get('https://notify-api.line.me/api/status', {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: `Bearer ${access_token}`
+            Authorization: `Bearer ${subscriptions[user]}`
           }
         })
-        verifiedsubscriptions.push(access_token)
+        verifiedsubscriptions[user] = subscriptions[user]
       } catch (err) {
         console.log(err)
       }
     }
     subscriptions = verifiedsubscriptions
-    for (const access_token of subscriptions) {
+    for (const user in subscriptions) {
       await axios.post(
         'https://notify-api.line.me/api/notify',
         new URLSearchParams({
@@ -181,7 +176,7 @@ app.post('/admin', async function (req, res) {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: `Bearer ${access_token}`
+            Authorization: `Bearer ${subscriptions[user]}`
           }
         }
       )
@@ -196,7 +191,7 @@ app.post('/admin', async function (req, res) {
     console.log(err)
   }
 })
-let subscriptions = []
+let subscriptions = {}
 const states = {}
 const genState = () => {
   const s = new Date().getTime()
