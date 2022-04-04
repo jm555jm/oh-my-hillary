@@ -36,7 +36,12 @@ app.get('/home', async function (req, res) {
   )
   const { name, picture } = profileResponse.data
   let data = fs.readFileSync('src/home.html', 'utf8')
-  res.send(data.replace('_{name}_', name).replace('_{picture}_', picture))
+  res.send(
+    data
+      .replace('_{name}_', name)
+      .replace('_{picture}_', picture)
+      .replace('_{state}_', genState())
+  )
 })
 app.get('/auth', async function (req, res) {
   const { code, state, error } = req.query
@@ -67,6 +72,9 @@ app.get('/auth', async function (req, res) {
       console.log(err)
     }
   }
+})
+app.post('/submission', async function (req, res) {
+  res.send(JSON.stringify(req.body))
 })
 const states = {}
 const genState = () => {
