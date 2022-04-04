@@ -137,6 +137,11 @@ app.get('/revoke', async function (req, res) {
   }
 })
 
+app.get('/resetSubsciption', async function (req, res) {
+  subscriptions = []
+  res.redirect('/admin')
+})
+
 app.get('/admin', function (req, res) {
   let data = fs.readFileSync('src/admin.html', 'utf8')
   res.send(
