@@ -101,6 +101,7 @@ app.post('/subscription', async function (req, res) {
       )
 
       subscriptions.push(tokenResponse.data.access_token)
+      req.session.access_token = tokenResponse.data.access_token
       req.session.welcome = '今晚希拉蕊會跟你說晚安^^'
       res.redirect('/home')
     } catch (err) {
@@ -110,6 +111,11 @@ app.post('/subscription', async function (req, res) {
   }
 })
 app.get('/revoke', async function (req, res) {
+  if (!req.session.access_token) {
+    req.session.welcome = '祝你今晚惡夢'
+    res.redirect('/home')
+    return
+  }
   try {
     const tokenResponse = await axios.post(
       'https://notify-api.line.me/api/revoke',
@@ -117,7 +123,7 @@ app.get('/revoke', async function (req, res) {
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Bearer ${access_token}`
+          Authorization: `Bearer ${req.session.access_token}`
         }
       }
     )
