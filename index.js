@@ -6,13 +6,13 @@ app.use('/img', express.static(__dirname + '/img'))
 app.get('/', function (req, res) {
   res.sendFile('src/login.html', { root: __dirname })
 })
-app.get('/auth', function (req, res) {
+app.get('/auth', async function (req, res) {
   const { code, state, error } = req.query
   if (error) {
     res.send('Fuck you 希拉蕊不歡迎你')
   } else {
-    axios
-      .post(
+    try {
+      const token = await axios.post(
         'https://api.line.me/oauth2/v2.1/token',
         new URLSearchParams({
           grant_type: 'authorization_code',
@@ -27,13 +27,11 @@ app.get('/auth', function (req, res) {
           }
         }
       )
-      .then((response) => {
-        res.send(JSON.stringify(response.data))
-      })
-      .catch((err) => {
-        res.send('Fuck you 希拉蕊不歡迎你')
-        console.log(err)
-      })
+      res.send(JSON.stringify(token.data))
+    } catch (err) {
+      res.send('Fuck you 希拉蕊不歡迎你')
+      console.log(err)
+    }
   }
 })
 
